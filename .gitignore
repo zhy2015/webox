@@ -1,0 +1,33 @@
+# IDE and operating system
+.DS_Store
+.idea/
+.vscode/
+*.iml
+
+# Secrets and local overrides
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.yaml
+
+# Backend
+backend/target/
+backend/.classpath
+backend/.project
+backend/.settings/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
+# Runtime data
+.runtime/
+uploads/
+*.log

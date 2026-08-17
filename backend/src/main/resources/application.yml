@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: webox-backend
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3307/webox?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai}
+    username: ${DB_USERNAME:webox}
+    password: ${DB_PASSWORD:webox_local}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Asia/Shanghai
+  flyway:
+    enabled: true
+  jackson:
+    default-property-inclusion: non_null
+server:
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+      timeout: 8h
+app:
+  business-time-zone: ${BUSINESS_TIME_ZONE:Asia/Shanghai}
+  frontend-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
