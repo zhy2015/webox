@@ -7,7 +7,7 @@ The source requirement is `参考资料/AI Vibe Coding V3.0 - PRD.md`. All end-u
 ## Five-minute reviewer path
 
 ```bash
-git clone git@github.com:zhy2015/webox.git
+git clone https://github.com/zhy2015/webox.git
 cd webox
 ./scripts/verify.sh
 ```
@@ -54,7 +54,7 @@ See [the project structure guide](docs/project-structure/README.md) for ownershi
 
 The P0 initial application is executable. Employee authentication, menus, customization, cart, checkout, orders, cancellation and preferences are connected to MySQL. The administrator Console supports dish and daily-menu management. Transactional inventory, server-side price calculation, cut-off handling and idempotency are implemented.
 
-The browser smoke flow and responsive menu have been verified. Eleven backend rule tests, four frontend state tests, the frontend production build, real-MySQL API smoke, concurrent inventory race and isolated clean-database rehearsal pass. The remaining submission gaps are automated browser coverage and the required raw AI conversation export; see [TODO.md](TODO.md) for the evidence-based status.
+The browser smoke flow and responsive menu have been verified. Eleven backend rule tests, four frontend state tests, the frontend production build, real-MySQL API smoke, concurrent inventory race and isolated clean-database rehearsal pass. The required [raw AI conversation export](ai-conversations/README.md) is included. A committed automated browser suite remains a future improvement; the browser acceptance flow was executed manually and is recorded in [TODO.md](TODO.md).
 
 ## Maintainer and AI handoff
 
@@ -76,7 +76,7 @@ Architecture invariants:
 - Keep all user-facing copy and seed content in English. Preserve `参考资料/` unchanged.
 - Do not start P1 or paused Tier 3 work by weakening a completed P0 acceptance rule.
 
-Before handing off any change, run `./scripts/verify.sh`. If only documentation changed, at minimum validate local Markdown links and keep `TODO.md` evidence-based. The complete raw AI conversation export is intentionally still marked incomplete because it must come from the coding tool itself and must not be reconstructed from summaries.
+Before handing off any change, run `./scripts/verify.sh`. If only documentation changed, at minimum validate local Markdown links and keep `TODO.md` evidence-based. Material follow-up work performed with an AI coding tool must add or refresh the raw export under `ai-conversations/`; never reconstruct it from summaries.
 
 ## Run locally
 
@@ -117,6 +117,62 @@ Run the complete local verification from the repository root:
 ./scripts/verify.sh
 ```
 
+The verification script creates uniquely named acceptance users and cancelled orders in the normal local database. The concurrency test restores the menu and inventory it temporarily changes. The clean-database rehearsal uses and removes an isolated disposable MySQL container.
+
+## Local runtime reference
+
+| Component | Address | Persistence |
+| --- | --- | --- |
+| Frontend | `http://127.0.0.1:5173` | Vite development process; no server-side data |
+| Backend API | `http://localhost:8080` | Stateless application process except in-memory HTTP sessions |
+| OpenAPI | `http://localhost:8080/swagger-ui.html` | Generated from current controllers |
+| Health | `http://localhost:8080/actuator/health` | Reports liveness and readiness |
+| MySQL | `localhost:3307`, database `webox` | Docker volume `infra_webox-mysql-data` |
+
+Local database credentials are intentionally non-secret and live in [`infra/compose.yaml`](infra/compose.yaml) and [`.env.example`](.env.example). Production credentials must come from a secret store and must never reuse these values.
+
+## Stop and reset
+
+Stop the frontend and backend development processes with `Ctrl-C`. Stop MySQL without deleting data:
+
+```bash
+docker compose -f infra/compose.yaml down
+```
+
+To deliberately erase the local demonstration database and prove migrations and seed data from scratch:
+
+```bash
+docker compose -f infra/compose.yaml down -v
+docker compose -f infra/compose.yaml up -d --wait
+```
+
+The `-v` command permanently deletes local orders, users and menu changes. Do not run it against data that must be retained. `./scripts/verify-clean-db.sh` is the non-destructive alternative because it uses an isolated temporary database.
+
+## Troubleshooting
+
+- `class file version 61.0` or Java 8 output: set `JAVA_HOME` to JDK 17 before running Maven.
+- `Cannot connect to the Docker daemon`: start Docker Desktop, then rerun the command.
+- Port `3307`, `8080` or `5173` already in use: stop the conflicting process or container before using the documented defaults.
+- Login disappears after a backend restart: server-side sessions are intentionally in memory for the local single-node release; sign in again.
+- MySQL is healthy but startup fails after local schema experiments: preserve any needed data, then use the explicit reset procedure above.
+
+## Known boundaries
+
+- Dish images use bundled assets or administrator-provided URLs; multipart upload and object storage are P1.
+- AI recommendations, the operations dashboard, SSE inventory push, Redis and administrator order-state workflows are intentionally paused.
+- Inventory is transactionally correct and refreshed after mutations, but it is not pushed live to already-open browsers.
+- Local HTTP sessions are suitable for this single-node release, not a horizontally scaled production deployment.
+- No production hosting, TLS, backup schedule or CI/CD target is configured; [`docs/deployment/local-development.md`](docs/deployment/local-development.md) describes the intended production shape.
+
+## Acceptance checklist
+
+1. Run `./scripts/verify.sh` and require `WeBox verification passed`.
+2. Sign in as the employee, customize a required option, place an order, inspect it and cancel a pending order.
+3. Save allergens and budget preferences, then confirm the allergen warning and advisory budget warning.
+4. Sign in as the administrator, edit a dish, change publish state, and save today or tomorrow's menu stock.
+5. Return to the employee menu and confirm the administrator change is visible.
+6. Inspect OpenAPI and the evidence in [`TODO.md`](TODO.md) before extending scope.
+
 ## Documentation entry points
 
 - [Requirements baseline](docs/requirements/product-requirements.md)
@@ -129,3 +185,4 @@ Run the complete local verification from the repository root:
 - [Local deployment plan](docs/deployment/local-development.md)
 - [Decision records](docs/adr/)
 - [Change records](docs/commit-records/)
+- [Raw AI conversation export](ai-conversations/README.md)
